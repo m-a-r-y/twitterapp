@@ -24,18 +24,66 @@
       </div>
       <div class="form-group">
         <div class="text-center">
-          <button type="button" class="btn btn-sucess" id="followers">Followers</button>
-          <button type="button" class="btn btn-sucess" id="friends">Friends</button>
+          <button type="button" class="btn btn-sucess" id="followers" data-api="/followers">Followers</button>
+          <button type="button" class="btn btn-sucess" id="friends" data-api="/friends">Friends</button>
         </div>
       </div>
     </form>
     </div>
+
+    <div id="output">
+    </div>
+    <script id="template" type="text/x-handlebars-template">
+      {{#each users}}
+        <div class="row">
+          <div class="col-sm-2">
+            <img src="{{profile_image_url}}" />
+          </div>
+          <div class="col-sm-6">
+            @{{screen_name}}
+          </div>
+          <div class="col-sm-2">
+            {{ratio}}
+          </div>
+          <div class="col-sm-2">
+            <a href="http://twitter.com/{{screen_name}}"><i class="fa fa-twitter fa-2x"></i></a>
+          </div>
+        </div>
+      {{/each}}
+    </script>
+
   </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script src="http://builds.handlebarsjs.com.s3.amazonaws.com/handlebars-v2.0.0.js"></script>
 <script>
+  var currentCursor = -1;
 $(function() {
+  $("#followers,#friends").on("click", function() {
+    $("#output").html("<div class='lead'><i class='fa fa-spin fa-spinner'></i> Loading ...</div>");
+    var twitterHandle = $("#twitter-handle").val();
+    $.ajax($(this).data("api"), { type: "POST", data: { twitterHandle: twitterHandle, currentCursor: currentCursor } }).then(function(response) {
+      console.log(response);
+      currentCursor = response.next_cursor;
+      data = response;
+      refreshTable();
+    });
+  });
+
+  var source   = $("#template").html();
+  var template = Handlebars.compile(source);
+  var data = {}
+
+  var refreshTable = function(){
+      var html    = template(data);
+      $("#output").html(html);
+  };
+
+  refreshTable();
+
+    Handlebars.registerHelper("ratio", function() {
+        return (this.friends_count/this.followers_count).toFixed(2);
+    });
 
 });
 </script>
